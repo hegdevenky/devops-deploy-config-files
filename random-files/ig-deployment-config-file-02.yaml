@@ -1,0 +1,57 @@
+version: 1.0
+component: deployment
+runAs: root
+shell: bash
+env:
+  variables:
+    version: ${appVersion}
+  vaultVariables:
+    docker_registry_password : <secret-ocid>
+files:
+  # This section is to define how the files in the artifact is put on the compute instance.
+  # Multiple entires are supported using a separate source destination section for every entry.
+  - source: /
+    destination: /genericArtifactDemo
+  - source: /tmp/file1
+    destination: /var/applicationPath/someDir1
+  - source: /tmp/file2
+    destination: /var/applicationPath/someDir2
+steps:
+  # This section is to define the scripts that each step runs on the instance after file copy.
+  - stepType: Command
+    name: Install Apache Web Server
+    command: /genericArtifactDemo/install_dependencies.sh
+    runAs: root
+    timeoutInSeconds: 600
+  - stepType: Command
+    name: Stop Web Server
+    command: /genericArtifactDemo/stop.sh
+    runAs: root
+    timeoutInSeconds: 60
+  - stepType: Command
+    name: Install New Version of Software
+    command: /genericArtifactDemo/install.sh
+    runAs: root
+    timeoutInSeconds: 60
+  - stepType: Command
+    name: Start Web Server
+    command: /genericArtifactDemo/start.sh
+    runAs: root
+    timeoutInSeconds: 60
+  - stepType: Command
+    name: stop and install
+    command: |
+      /scripts/stop.sh
+      echo "Done stop.sh.."
+      /scripts/install_dependencies.sh
+      echo "Done install_dependencies.sh.."
+      /scripts/install.sh
+      echo "Done install.sh.."
+    timeoutInSeconds: 1200
+    runAs: root
+    shell: /bin/sh
+    onFailure:
+      - stepType: Command
+        command: /scripts/recovery_steps.sh
+        name:"OnFailure step"
+        timeoutInSeconds: 1200
