@@ -1,0 +1,6 @@
+version: 1.0
+component: deployment
+steps:
+  - stepType: Command
+    name: TestRunSingleCommand
+    command: ls -al
