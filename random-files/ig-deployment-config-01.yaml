@@ -1,0 +1,36 @@
+version: 1.0
+component: deployment
+runAs: ocarun
+env:
+  variables:
+    version: ${appVersion}
+  vaultVariables:
+    SECRET_ID: "OCID of the secret in the vault"
+files:
+  - source: /
+    destination: /var/ocarun_staging/app1_staging_folder
+steps:
+  - stepType: Command
+    name: Validate Variables
+    command: echo "Version = ${version}: Secret = ${SECRET_ID}"
+    timeoutInSeconds: 60
+  - stepType: Command
+    name: Stop currently-running application
+    command: cd /var/ocarun_prod/main_app; ./stop.sh
+    timeoutInSeconds: 600
+  - stepType: Command
+    name: Clean old version of source code in prod directory
+    command: echo "Perform suitable cleanup"
+    timeoutInSeconds: 600
+  - stepType: Command
+    name: Copy new version of source code from staging directory to prod directory
+    command: cp -R /var/ocarun_staging/app1_staging_folder/main_app /var/ocarun_prod/
+    timeoutInSeconds: 600
+  - stepType: Command
+    name: Install application
+    command: cd /var/ocarun_prod/main_app; ./install.sh
+    timeoutInSeconds: 600
+  - stepType: Command
+    name: Run application
+    command: cd /var/ocarun_prod/main_app; ./start.sh
+    timeoutInSeconds: 600
