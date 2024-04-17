@@ -3,5 +3,5 @@ component: deployment
 # test comment
 steps:
   - stepType: Command
-    name: TestRunSingleCommand
+    name: ${CommandName}
     command: ls -al
