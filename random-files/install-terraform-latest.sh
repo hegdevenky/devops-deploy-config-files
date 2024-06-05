@@ -23,8 +23,6 @@ user=""
 if [ "$user" != 'root' ]; then
   if command_exists sudo; then
     user="sudo"
-  elif command_exists su; then
-    user='su -c'
   else
     echo >&2 'Error: this installer needs the ability to run commands as root.'
     echo >&2 'We are unable to find either "sudo" or "su" available to make this happen.'
