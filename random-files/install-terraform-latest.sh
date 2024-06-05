@@ -1,10 +1,19 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -e
 package_name=""
 TERRAFORM_DOWNLOAD_LOC=$HOME/terraform
 
 command_exists() {
   command -v "$@" > /dev/null 2>&1
+}
+
+# runs the given command as root (detects if we are root already)
+runAsRoot() {
+  if [ $EUID -ne 0 -a "$USE_SUDO" = "true" ]; then
+    sudo "${@}"
+  else
+    "${@}"
+  fi
 }
 
 # either curl or wget should have been installed
@@ -19,18 +28,18 @@ else
     exit 1
 fi
 
-user=""
-if [ "$user" != 'root' ]; then
-  if command_exists sudo; then
-    user="sudo"
-  elif command_exists su; then
-    user='su -c'
-  else
-    echo >&2 'Error: this installer needs the ability to run commands as root.'
-    echo >&2 'We are unable to find either "sudo" or "su" available to make this happen.'
-    exit 1
-  fi
-fi
+#user=""
+#if [ "$user" != 'root' ]; then
+#  if command_exists sudo; then
+#    user="sudo"
+#  elif command_exists su; then
+#    user='su -c'
+#  else
+#    echo >&2 'Error: this installer needs the ability to run commands as root.'
+#    echo >&2 'We are unable to find either "sudo" or "su" available to make this happen.'
+#    exit 1
+#  fi
+#fi
 
 current_version=$(curl --silent https://checkpoint-api.hashicorp.com/v1/check/terraform | python3 -m json.tool | grep current_version | cut -f 2 -d :| cut -f 2 -d '"')
 
@@ -112,8 +121,8 @@ package_name="terraform_${current_version}_${platform}_${processor}.zip"
 url=https://releases.hashicorp.com/terraform/"${current_version}"/"${package_name}"
 mkdir -p "${TERRAFORM_DOWNLOAD_LOC}"
 $client "${TERRAFORM_DOWNLOAD_LOC}/${package_name}" "${url}"
-$user unzip -qq "${TERRAFORM_DOWNLOAD_LOC}"/"${package_name}" -d /usr/local/bin
-$user rm -r "${TERRAFORM_DOWNLOAD_LOC}"
+runAsRoot unzip -qq "${TERRAFORM_DOWNLOAD_LOC}"/"${package_name}" -d /usr/local/bin
+runAsRoot rm -r "${TERRAFORM_DOWNLOAD_LOC}"
 
 echo "Terraform installed successfully"
 cat >&2 <<'EOF'
